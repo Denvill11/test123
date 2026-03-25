@@ -70,13 +70,22 @@ const buildOutgoingStream = () => {
   return processedStream;
 };
 
+const findVideoSender = (pc) => {
+  const withTrack = pc.getSenders().find((s) => s.track && s.track.kind === 'video');
+  if (withTrack) return withTrack;
+  const tr = pc.getTransceivers().find(
+    (t) => t.sender && t.sender.track && t.sender.track.kind === 'video'
+  );
+  return tr ? tr.sender : null;
+};
+
 const syncStreamToPeer = async (call, stream) => {
   const pc = call.peerConnection;
   if (!pc || pc.connectionState === 'closed') return;
   const v = stream.getVideoTracks()[0];
   const a = stream.getAudioTracks()[0];
   const audioSender = pc.getSenders().find((s) => s.track && s.track.kind === 'audio');
-  const videoSender = pc.getSenders().find((s) => s.track && s.track.kind === 'video');
+  const videoSender = findVideoSender(pc);
   if (a && audioSender) {
     await audioSender.replaceTrack(a);
   }
@@ -88,7 +97,7 @@ const syncStreamToPeer = async (call, stream) => {
     }
   } else if (videoSender) {
     try {
-      videoSender.track.stop();
+      if (videoSender.track) videoSender.track.stop();
     } catch (_) {}
     pc.removeTrack(videoSender);
   }
@@ -119,6 +128,25 @@ const wireIncomingCall = (call) => {
     video.id = `video-${call.peer}`;
   } catch (_) {}
   call.on('stream', (userVideoStream) => {
+    const onRemoteTracksChanged = () => {
+      refreshRemoteVideoPresentation(video, userVideoStream);
+      const p = video.play();
+      if (p && typeof p.catch === 'function') p.catch(() => {});
+      updateLayout();
+    };
+    userVideoStream.addEventListener('addtrack', onRemoteTracksChanged);
+    userVideoStream.addEventListener('removetrack', onRemoteTracksChanged);
+    try {
+      const pc = call.peerConnection;
+      if (pc) {
+        pc.addEventListener('track', (ev) => {
+          const rs = (ev.streams && ev.streams[0]) || userVideoStream;
+          refreshRemoteVideoPresentation(video, rs);
+          video.play().catch(() => {});
+          updateLayout();
+        });
+      }
+    } catch (_) {}
     addVideoStream(video, userVideoStream);
   });
   try {
@@ -600,6 +628,32 @@ peer.on('open', (id) => {
 peer.on('error', (err) => {
   console.error('PeerJS error:', err);
 });
+
+/**
+ * Удалённый поток сначала часто только audio — показываем аватар.
+ * Когда собеседник включает экран, приходит новый video track; событие `stream` в PeerJS не повторяется,
+ * поэтому слушаем addtrack/removetrack и обновляем превью.
+ */
+const refreshRemoteVideoPresentation = (video, stream) => {
+  if (!video || !stream) return;
+  video.srcObject = stream;
+  const hasVideo = stream.getVideoTracks().some((t) => t.readyState !== 'ended');
+  const avatarEl = document.getElementById(`avatar-${video.id}`);
+  if (hasVideo) {
+    video.classList.add('videoBlock');
+    video.classList.remove('none');
+    if (avatarEl) avatarEl.remove();
+  } else {
+    video.classList.add('none');
+    video.classList.remove('videoBlock');
+    if (!document.getElementById(`avatar-${video.id}`) && videoGrid) {
+      const avatar = document.createElement('div');
+      avatar.id = `avatar-${video.id}`;
+      addAvatar(avatar);
+    }
+  }
+};
+
 const addVideoStream = (video, stream) => {
   video.srcObject = stream;
   const isVideoInclude = stream.getVideoTracks().reduce((acc, track) => acc || track.kind === 'video', false);
