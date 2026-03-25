@@ -30,6 +30,8 @@ let originalStream;
 let processedStream;
 let screenStream = null;
 const activeCalls = new Map();
+/** Последний список участников комнаты — чтобы дозвониться, если room-users пришёл до myPeerId. */
+let lastRoomUsers = [];
 
 // Web Audio nodes
 let audioContext;
@@ -441,8 +443,9 @@ getMicStream()
   });
 
   socket.on('room-users', (users) => {
+    lastRoomUsers = Array.isArray(users) ? users : [];
     try {
-      (users || []).forEach(({ userId, nick }) => {
+      lastRoomUsers.forEach(({ userId, nick }) => {
         if (userId) userNicknames[userId] = (nick || '').trim();
         if (userId && myPeerId && userId !== myPeerId && processedStream) {
           connectToNewUser(userId);
@@ -621,9 +624,24 @@ const connectToNewUser = (userId) => {
   const call = peer.call(userId, out);
   wireIncomingCall(call);
 };
+
+/** Если room-users пришёл до peer.on('open'), исходящий call не создавался — повторяем. */
+const tryConnectToPeersInRoom = () => {
+  if (!myPeerId || !processedStream) return;
+  try {
+    lastRoomUsers.forEach(({ userId, nick }) => {
+      if (userId) userNicknames[userId] = (nick || '').trim();
+      if (userId && userId !== myPeerId) {
+        connectToNewUser(userId);
+      }
+    });
+  } catch (_) {}
+};
+
 peer.on('open', (id) => {
   myPeerId = id;
   tryEmitJoinRoom();
+  tryConnectToPeersInRoom();
 });
 peer.on('error', (err) => {
   console.error('PeerJS error:', err);
