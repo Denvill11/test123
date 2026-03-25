@@ -479,27 +479,72 @@ getMicStream()
     syncOutgoingToPeers();
   };
 
+  const openDisplayMediaViaElectronDesktop = async () => {
+    const api = typeof window !== 'undefined' && window.cumchatka;
+    if (!api || typeof api.getScreenSourceId !== 'function') return null;
+    const sourceId = await api.getScreenSourceId();
+    if (!sourceId) return null;
+    const flat = {
+      audio: false,
+      video: {
+        chromeMediaSource: 'desktop',
+        chromeMediaSourceId: sourceId
+      }
+    };
+    const nested = {
+      audio: false,
+      video: {
+        mandatory: {
+          chromeMediaSource: 'desktop',
+          chromeMediaSourceId: sourceId
+        }
+      }
+    };
+    try {
+      return await navigator.mediaDevices.getUserMedia(nested);
+    } catch (e1) {
+      try {
+        return await navigator.mediaDevices.getUserMedia(flat);
+      } catch (e2) {
+        throw e2 || e1;
+      }
+    }
+  };
+
   const openDisplayMedia = async () => {
     const md = navigator.mediaDevices;
-    if (!md || typeof md.getDisplayMedia !== 'function') {
-      showToast('Демонстрация экрана не поддерживается в этом окружении');
-      throw new Error('getDisplayMedia missing');
-    }
     const attempts = [
       { video: { cursor: 'always' }, audio: false },
       { video: true, audio: false },
       { video: true }
     ];
     let lastErr;
-    for (const constraints of attempts) {
-      try {
-        return await md.getDisplayMedia(constraints);
-      } catch (e) {
-        lastErr = e;
-        if (e.name !== 'NotSupportedError' && e.name !== 'TypeError' && e.name !== 'OverconstrainedError') {
-          throw e;
+
+    if (md && typeof md.getDisplayMedia === 'function') {
+      for (const constraints of attempts) {
+        try {
+          return await md.getDisplayMedia(constraints);
+        } catch (e) {
+          lastErr = e;
+          if (e.name !== 'NotSupportedError' && e.name !== 'TypeError' && e.name !== 'OverconstrainedError') {
+            throw e;
+          }
         }
       }
+    }
+
+    try {
+      const viaElectron = await openDisplayMediaViaElectronDesktop();
+      if (viaElectron) return viaElectron;
+    } catch (e) {
+      lastErr = lastErr || e;
+      if (e && e.name !== 'NotSupportedError' && e.name !== 'TypeError') {
+        throw e;
+      }
+    }
+
+    if (!md || typeof md.getDisplayMedia !== 'function') {
+      showToast('Демонстрация экрана не поддерживается в этом окружении');
     }
     throw lastErr || new Error('getDisplayMedia failed');
   };
