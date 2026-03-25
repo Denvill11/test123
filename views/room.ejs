@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Комната — <%= roomId %></title>
+    <link rel="stylesheet" href="/style.css" />
+    <link rel="stylesheet" href="/videoStyles.css" />
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tunajs@1.0.12/tuna-min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
+    <script>
+      const ROOM_ID = "<%= roomId %>";
+    </script>
+  </head>
+  <body class="room-page">
+    <div class="room-shell">
+      <header class="room-header">
+        <a href="/" class="room-back" title="На главную" aria-label="На главную">
+          <img src="/images/arrow-back.svg" alt="" class="room-back__icon" width="22" height="22" />
+        </a>
+        <div class="room-title-block">
+          <span class="room-eyebrow">Комната</span>
+          <h1 class="room-heading"><%= roomId %></h1>
+        </div>
+        <div class="room-header-spacer" aria-hidden="true"></div>
+      </header>
+
+      <main class="room-stage">
+        <div id="video-grid" class="video-grid" role="region" aria-label="Участники звонка"></div>
+      </main>
+
+      <footer class="room-controls" role="toolbar" aria-label="Управление звонком">
+        <div class="room-controls__bar">
+          <button type="button" id="muteButton" class="ctrl-btn" title="Микрофон" aria-pressed="false" aria-label="Выключить микрофон">
+            <img id="muteButtonIcon" class="ctrl-btn__icon" src="/images/call-mic.svg" alt="" width="26" height="26" />
+          </button>
+          <button type="button" id="screenShareButton" class="ctrl-btn" title="Демонстрация экрана" aria-pressed="false" aria-label="Включить демонстрацию экрана">
+            <img class="ctrl-btn__icon" src="/images/call-screen.svg" alt="" width="26" height="26" />
+          </button>
+          <button type="button" id="inviteButton" class="ctrl-btn ctrl-btn--accent" title="Скопировать ссылку" aria-label="Скопировать ссылку на комнату">
+            <img class="ctrl-btn__icon" src="/images/call-invite.svg" alt="" width="26" height="26" />
+          </button>
+          <a href="/" id="endCallButton" class="ctrl-btn ctrl-btn--end" title="Завершить разговор" aria-label="Завершить разговор и выйти на главную">
+            <img class="ctrl-btn__icon" src="/images/call-end.svg" alt="" width="26" height="26" />
+          </a>
+        </div>
+      </footer>
+    </div>
+
+    <div id="roomToast" class="room-toast" role="status" aria-live="polite" hidden></div>
+
+    <a href="/settings" title="Настройки" class="fab"
+      ><img src="/images/gear.png" alt="Настройки" class="fab__img" onerror="this.style.display='none'; this.closest('a').textContent='⚙️';"
+    /></a>
+    <script src="/scripts/room.js"></script>
+  </body>
+</html>

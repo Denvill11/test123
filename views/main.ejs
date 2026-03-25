@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat Lobby</title>
+    <link rel="stylesheet" href="/style.css" />
+    <link rel="stylesheet" href="/videoStyles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1 id="typeTitle" style="min-height: 1.2em; white-space: nowrap;">
+        <span id="typePrefix">Welcome </span><span id="typeWord"></span><span id="typeCaret">|</span>
+        <input id="nickInputInline" type="text" placeholder="your nickname" style="display:none;" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+      </h1>
+      <div class="actions">
+        <div class="create">
+          <button id="createRoom">Создать новый чат</button>
+          <input id="roomPassInput" type="password" placeholder="Пароль (опционально)" />
+        </div>
+        <div class="join">
+          <input id="roomIdInput" type="text" placeholder="Вставьте ID комнаты" />
+          <button id="joinRoom">Присоединиться к чату</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/scripts/main.js"></script>
+  </body>
+  <a href="/settings" title="Настройки" class="fab"><img src="/images/gear.png" alt="Настройки" class="fab__img" onerror="this.style.display='none'; this.closest('a').textContent='⚙️';" /></a>
+  </html>
+
+

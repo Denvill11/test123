@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Настройки звука</title>
+    <link rel="stylesheet" href="/style.css" />
+    <link rel="stylesheet" href="/videoStyles.css" />
+  </head>
+  <body>
+    <a href="#" class="back" title="Назад" onclick="history.back(); return false;">←</a>
+    <div class="container" style="align-items: stretch; gap: 16px; max-width: 720px; margin: 0 auto; text-align: left;">
+      <h1 style="text-align:center;">Настройки звука</h1>
+      <div style="margin-bottom: 6px; font-weight: 600; text-align:center;">Индикатор громкости</div>
+      <div id="levelMeter" style="height: 14px; width: 100%; background: transparent; border-radius: 7px; overflow: hidden; position: relative; margin-bottom: 0;">
+        <div id="levelFill" style="height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary-weak) 0%, var(--primary-weak) 45%, var(--primary) 100%); transition: width 50ms linear;"></div>
+        <div id="levelText" style="position:absolute; top: -22px; right: 0; font-size: 12px; color: rgba(255,255,255,0.8);">-∞ dB</div>
+      </div>
+
+      <div class="settings-row">
+        <div class="settings-label">Громкость</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <input id="gainSlider" type="range" min="0" max="4" step="0.01" />
+          <span id="gainVal" style="width:60px; text-align:right;">1.00×</span>
+        </div>
+      </div>
+
+      <div class="settings-row">
+        <div class="settings-label">Бас</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <input id="bassSlider" type="range" min="-24" max="24" step="1" />
+          <span id="bassVal" style="width:60px; text-align:right;">0 dB</span>
+        </div>
+      </div>
+
+      <div class="settings-row">
+        <div class="settings-label">Высокие</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <input id="trebleSlider" type="range" min="-12" max="12" step="1" />
+          <span id="trebleVal" style="width:60px; text-align:right;">0 dB</span>
+        </div>
+      </div>
+
+      <div class="settings-row">
+        <div class="settings-label">Реверберация</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <input id="reverbSlider" type="range" min="0" max="1" step="0.01" />
+          <span id="reverbVal" style="width:60px; text-align:right;">0%</span>
+        </div>
+      </div>
+
+      <div class="settings-row">
+        <div class="settings-label">Шумоподавление</div>
+        <label class="switch">
+          <input id="nsToggle" type="checkbox" />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="settings-row">
+        <div class="settings-label">Байпас</div>
+        <label class="switch">
+          <input id="bypassToggle" type="checkbox" />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="settings-row">
+        <div class="settings-label">Слышать себя</div>
+        <label class="switch">
+          <input id="monitorToggle" type="checkbox" />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div style="display:flex; gap: 10px; justify-content:center;">
+        <button id="resetBtn" class="btn btn--neutral" style="width: 200px;">Сбросить</button>
+      </div>
+    </div>
+    <script src="/scripts/settings.js"></script>
+  </body>
+  </html>
+
+
