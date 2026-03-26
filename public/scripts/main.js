@@ -1,7 +1,30 @@
-document.getElementById('createRoom').addEventListener('click', () => {
+document.getElementById('createRoom').addEventListener('click', async () => {
   const pass = document.getElementById('roomPassInput').value.trim();
-  const q = pass ? `?pass=${encodeURIComponent(pass)}` : '';
-  window.location.href = '/new' + q;
+  // pass пока игнорируем на бэке (сигналинг-комната создаётся только по roomId)
+  try {
+    const fallbackOrigin =
+      window.location &&
+      window.location.origin &&
+      window.location.origin.startsWith('http')
+        ? window.location.origin
+        : '';
+    const backendOrigin =
+      window.BACKEND_ORIGIN ||
+      (window.cumchatka && typeof window.cumchatka.getBackendOrigin === 'function'
+        ? await window.cumchatka.getBackendOrigin()
+        : '') ||
+      fallbackOrigin;
+    if (!backendOrigin) throw new Error('backend origin missing');
+
+    const res = await fetch(`${backendOrigin.replace(/\/$/, '')}/api/new-room`);
+    if (!res.ok) throw new Error(`new-room http ${res.status}`);
+    const data = await res.json();
+    if (!data || !data.roomId) throw new Error('roomId missing');
+    window.location.href = `room.html?roomId=${encodeURIComponent(data.roomId)}`;
+  } catch (e) {
+    console.error(e);
+    window.alert('Не удалось создать комнату');
+  }
 });
 
 document.getElementById('joinRoom').addEventListener('click', () => {
@@ -19,7 +42,7 @@ document.getElementById('joinRoom').addEventListener('click', () => {
   };
   const roomId = extractRoomId(raw);
   if (!roomId) return;
-  window.location.href = `/room/${encodeURIComponent(roomId)}`;
+  window.location.href = `room.html?roomId=${encodeURIComponent(roomId)}`;
 });
 
 (() => {

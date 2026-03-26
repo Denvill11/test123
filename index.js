@@ -2,18 +2,13 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const http = require('http');
-const homeRouter = require('./routes/home');
-const roomRouter = require('./routes/room');
-const settingsRouter = require('./routes/settings');
+const { v4: uuidv4 } = require('uuid');
 
 const PORT = Number(process.env.PORT) || 3030;
 const HOST = process.env.HOST || '0.0.0.0';
 
 const app = express();
 const server = http.createServer(app);
-
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
 
 app.use(express.json());
 
@@ -29,21 +24,18 @@ const peerServer = ExpressPeerServer(server, {
   debug: process.env.NODE_ENV !== 'production'
 });
 app.use('/peerjs', peerServer);
-
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, service: 'cumchatka-backend', port: PORT });
 });
 
-app.use('/', homeRouter);
-app.use('/settings', settingsRouter);
-app.use('/room', roomRouter);
-
-app.get('/:room', (req, res, next) => {
-  const skip = ['peerjs', 'socket.io', 'settings', 'room', 'new', 'api'];
-  if (skip.includes(req.params.room)) return next();
-  return res.redirect(301, `/room/${req.params.room}`);
+// Бек отвечает только за подключение к чату (signalling):
+// - socket.io: user-connected / join-room
+// - /peerjs: PeerJS signalling server
+// - /api/new-room: создание roomId на бекe
+app.get('/api/new-room', (req, res) => {
+  res.json({ roomId: uuidv4() });
 });
 
 app.use((req, res) => {

@@ -1,4 +1,5 @@
-const socket = io('/', {
+const backendOrigin = (window.BACKEND_ORIGIN || '').trim();
+const socket = io(backendOrigin || '/', {
   transports: ['polling', 'websocket'],
   upgrade: true,
   reconnectionAttempts: 10,
@@ -12,11 +13,19 @@ myVideo.muted = true;
 /** Входящие звонки до готовности микрофона — иначе answer() не вызывается и связи нет. */
 const pendingIncomingCalls = [];
 
+const backendUrl = (() => {
+  try {
+    return new URL(backendOrigin);
+  } catch (_) {
+    return new URL(location.href);
+  }
+})();
+
 const peer = new Peer(undefined, {
   path: '/peerjs',
-  host: location.hostname,
-  port: location.port ? location.port : (location.protocol === 'https:' ? '443' : '80'),
-  secure: location.protocol === 'https:',
+  host: backendUrl.hostname,
+  port: backendUrl.port ? backendUrl.port : (backendUrl.protocol === 'https:' ? '443' : '80'),
+  secure: backendUrl.protocol === 'https:',
   config: {
     iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },
@@ -55,8 +64,17 @@ let myPeerId = null;
 let mediaReady = false;
 let hasJoinedRoom = false;
 
+const ROOM_ID = (() => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('roomId') || '';
+  } catch (_) {
+    return '';
+  }
+})();
+
 const tryEmitJoinRoom = () => {
-  if (hasJoinedRoom || !myPeerId || !mediaReady) return;
+  if (hasJoinedRoom || !ROOM_ID || !myPeerId || !mediaReady) return;
   socket.emit('join-room', ROOM_ID, myPeerId, myNick || '');
   hasJoinedRoom = true;
 };
@@ -473,7 +491,7 @@ getMicStream()
       muteBtn.setAttribute('aria-label', muted ? 'Включить микрофон' : 'Выключить микрофон');
       const icon = document.getElementById('muteButtonIcon');
       if (icon) {
-        icon.src = muted ? '/images/call-mic-off.svg' : '/images/call-mic.svg';
+        icon.src = muted ? 'images/call-mic-off.svg' : 'images/call-mic.svg';
       }
     }
   };
@@ -709,7 +727,7 @@ const addVideoStream = (video, stream) => {
 
 const addAvatar = (avatar) => {
   const realAvatr = document.createElement('img');
-  realAvatr.src = '/images/avatar.png';
+  realAvatr.src = 'images/avatar.png';
   avatar.classList.add('avatar');
   realAvatr.classList.add('img');
   videoGrid.append(avatar);
@@ -870,8 +888,8 @@ window.addEventListener('pagehide', () => {
 
 document.getElementById('inviteButton')?.addEventListener('click', async () => {
   try {
-    await navigator.clipboard.writeText(window.location.href);
-    showToast('Ссылка скопирована');
+    await navigator.clipboard.writeText(ROOM_ID);
+    showToast('ID комнаты скопирован');
   } catch (_) {
     showToast('Не удалось скопировать');
   }
